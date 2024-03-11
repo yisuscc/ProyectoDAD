@@ -9,10 +9,10 @@ import java.util.Objects;
  * 
  */
 public class Actuador {
-	private String id;
+	private Integer id;
 	private Long timestamp;
-	private String status;
-	private boolean encendido;
+	private String status; //un mensaje que luego el esp3 decodfica
+	private boolean encendido; // true si está encendido, false si no 
 	@Override
 	public int hashCode() {
 		return Objects.hash(encendido, id, status, timestamp);
@@ -34,17 +34,17 @@ public class Actuador {
 		return encendido == other.encendido && Objects.equals(id, other.id) && Objects.equals(status, other.status)
 				&& Objects.equals(timestamp, other.timestamp);
 	}
-	public Actuador(String id, Long timestamp, String status, boolean encendido) {
+	public Actuador(Integer id, Long timestamp, String status, boolean encendido) {
 		super();
 		this.id = id;
 		this.timestamp = timestamp;
 		this.status = status;
 		this.encendido = encendido;
 	}
-	public String getId() {
+	public Integer getId() {
 		return id;
 	}
-	public void setId(String id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	public Long getTimestamp() {
@@ -64,5 +64,11 @@ public class Actuador {
 	}
 	public void setEncendido(boolean encendido) {
 		this.encendido = encendido;
+	}
+	public static Actuador getActuadorRandomWithId(Integer id ) {
+		Long timestamp =  System.currentTimeMillis();
+		String status = "deactivated";
+		Boolean on = Math.random()<0.5;
+		return new Actuador(id, timestamp, status, on);
 	}
 }

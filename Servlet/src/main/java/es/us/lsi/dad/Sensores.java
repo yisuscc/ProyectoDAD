@@ -50,7 +50,7 @@ public class Sensores {
 	public static Sensores sensoresRandom(Integer nSensores) {
 		Sensores collectionDeSensores = new Sensores();
 		for (int i = 0; i < nSensores; i++) {
-			Sensor sensorcito = Sensor.randomSensorWithID(i);
+			Sensor sensorcito = Sensor.createRandomSensorWithId(i);
 			collectionDeSensores.addSensor(sensorcito);
 		}
 		return collectionDeSensores;

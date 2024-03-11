@@ -35,7 +35,7 @@ public class ServletSensor extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse resp) throws ServletException, IOException {
-		Integer  sensorId = Integer.parseInt(request.getParameter("sensorId"));
+		Integer  sensorId = Integer.parseInt(request.getParameter("id"));
 		if(sensoresInternos.contieneSensor(sensorId)) {
 			String mensaje = sensoresInternos.getSensor(sensorId).toString();
 			resp.setStatus(200);
@@ -59,8 +59,9 @@ public class ServletSensor extends HttpServlet {
 		Gson gson = new Gson();
 		Sensor sensor = gson.fromJson(reader,Sensor.class);
 		// expandir las condiciones 
-		// esto quzas deberia encargarse la clase sensor con los checkers 
-		Boolean cond = sensor.getId()!= null && sensor.getTimestamp()!= null;
+		// esto quizas deberia encargarse la clase sensor con los checkers 
+		//Boolean cond = sensor.getId()!= null && sensor.getTimestamp()!= null;
+		Boolean cond = true;
 		if(cond) {
 			sensoresInternos.addSensor(sensor);
 			resp.setStatus(201);
@@ -77,10 +78,10 @@ public class ServletSensor extends HttpServlet {
 		//para luego, que si no nos morimos
 	}
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		Integer  sensorId = Integer.parseInt(req.getParameter("sensorId"));
+		Integer  sensorId = Integer.parseInt(req.getParameter("id"));
 		if(sensoresInternos.contieneSensor(sensorId)) {
 			Boolean res = sensoresInternos.deleteSensor(sensorId);
-			String mensaje = "";
+			String mensaje = "El sensor no se ha eliminado";
 			if(res) {
 			resp.setStatus(200);
 			

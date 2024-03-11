@@ -11,14 +11,15 @@ private Float value;
 //placaID  es util en el futuro 
 
 
-public static Sensor randomSensor() {
+public static Sensor getRandomSensor() {
 	Integer id = (int)Math.random();
 	String name = ((Double)Math.random()).toString();
 	String tipo = "CO2";
 	Long timestamp = System.currentTimeMillis();
 	Float value  =(float)Math.random();
 	return new Sensor(id, name, tipo, timestamp, value);
-}public static Sensor randomSensorWithID(Integer id) {
+}
+public static Sensor createRandomSensorWithId(Integer id) {
 	
 	String name =((Double)Math.random()).toString();
 	String tipo = "CO2";
