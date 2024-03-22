@@ -63,5 +63,9 @@ public class Sensor {
 				&& Objects.equals(placaId, other.placaId) && Objects.equals(timestamp, other.timestamp);
 	}
 
-	
+	public static Sensor random(Integer id , Integer placaId) {
+		Long timestamp = System.currentTimeMillis();
+		Double value = Math.random()*1000;
+		return new Sensor(id, placaId, timestamp, value); 
+	}
 }
