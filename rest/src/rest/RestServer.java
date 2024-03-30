@@ -1,8 +1,10 @@
 package rest;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -80,10 +82,18 @@ private void getActuador(RoutingContext routingContext) {
 	//TODO
 }
 private void getAllSensores(RoutingContext routingContext) {
-	//TODO
+	final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
+	List<Sensor> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastSensoresList(placaId):  new ArrayList<Sensor>();
+	routingContext.response().
+	putHeader("content-type", "application/json; charset=utf-8").
+	setStatusCode(200).end(gson.toJson(lsAux));
 }
 private void getAllActuadores(RoutingContext routingContext) {
-	//TODO
+	final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
+	List<Actuador> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastActuadoresList(placaId):  new ArrayList<Actuador>();
+	routingContext.response().
+	putHeader("content-type", "application/json; charset=utf-8").
+	setStatusCode(200).end(gson.toJson(lsAux));
 }
 	// creamos el stop
 	public void stop(Promise<Void> stopPromise) throws Exception {
