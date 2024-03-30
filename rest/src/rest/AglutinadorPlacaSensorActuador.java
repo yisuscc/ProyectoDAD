@@ -136,7 +136,12 @@ public class AglutinadorPlacaSensorActuador {
 		return mapaSensores.entrySet().stream().filter(e -> e.getKey().placaId().equals(placaID))
 				.collect(Collectors.toMap(e -> e.getKey().id(), e -> e.getValue()));
 	}
-
+public Boolean existeSensor(Integer id,Integer placaId) {
+	return mapaSensores.containsKey(Par.of(id, placaId));
+}
+public Boolean existeActuador(Integer id,Integer placaId) {
+	return mapaActuador.containsKey(Par.of(id, placaId));
+}
 //los añado aqúi para simplificar el codigo 
 	public Map<Integer, Sensor> getLastSensoresPlaca(Integer placaID) {
 		return getSensoresPlaca(placaID).entrySet().stream().map(e -> {
