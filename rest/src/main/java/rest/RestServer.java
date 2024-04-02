@@ -33,7 +33,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 	Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8075,result->{			if(result.succeeded()) {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8090,result->{			if(result.succeeded()) {
 			startFuture.complete();
 			}else {
 			startFuture.fail("El lanzamiento del servidor ha fallado"+result.cause());
@@ -90,7 +90,7 @@ private void getSensor(RoutingContext routingContext) {
 System.out.println("Placa id vale"+ placaId +"Id Vale " +id );
 System.out.println("la condicion es " +cond);
 System.out.println("Existe sensor:" + apsa.existeSensor(id, placaId));
-	Sensor sensor= cond?apsa.getLastSensor(id, placaId) :null ;
+	Sensor sensor= apsa.getLastSensor(id, placaId);
 	System.out.println(sensor);
 	if(sensor!=null) {
 		routingContext.response().

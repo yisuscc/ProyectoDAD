@@ -133,11 +133,11 @@ public class AglutinadorPlacaSensorActuador {
 
 	public Map<Integer, List<Sensor>> getSensoresPlaca(Integer placaID) {
 		// Devuelve todos las concetracionesde todos sensores asociados a una placa
-		return mapaSensores.entrySet().stream().filter(e -> e.getKey().placaId.equals(placaID))
-				.collect(Collectors.toMap(e -> e.getKey().id, e -> e.getValue()));
+		return mapaSensores.entrySet().stream().filter(e -> e.getKey().placaId().equals(placaID))
+				.collect(Collectors.toMap(e -> e.getKey().id(), e -> e.getValue()));
 	}
 public Boolean existeSensor(Integer id,Integer placaId) {
-	return mapaSensores.containsKey(Par.of(id, placaId));
+	return mapaSensores.get(Par.of(id, placaId)) != null;
 }
 public Boolean existeActuador(Integer id,Integer placaId) {
 	return mapaActuador.containsKey(Par.of(id, placaId));
@@ -158,8 +158,8 @@ public List<Sensor> getLastSensoresList(Integer placaId){
 
 	public Map<Integer, List<Actuador>> getActuadoresPlaca(Integer placaID) {
 		// Devuelve todos las concetracionesde todos sensores asociados a una placa
-		return mapaActuador.entrySet().stream().filter(e -> e.getKey().placaId.equals(placaID))
-				.collect(Collectors.toMap(e -> e.getKey().id, e -> e.getValue()));
+		return mapaActuador.entrySet().stream().filter(e -> e.getKey().placaId().equals(placaID))
+				.collect(Collectors.toMap(e -> e.getKey().id(), e -> e.getValue()));
 	}
 
 	public Map<Integer, Actuador> getLastActuadoresPlaca(Integer placaID) {
