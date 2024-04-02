@@ -137,7 +137,7 @@ public class AglutinadorPlacaSensorActuador {
 				.collect(Collectors.toMap(e -> e.getKey().id(), e -> e.getValue()));
 	}
 public Boolean existeSensor(Integer id,Integer placaId) {
-	return mapaSensores.containsKey(Par.of(id, placaId));
+	return mapaSensores.get(Par.of(id, placaId)) != null;
 }
 public Boolean existeActuador(Integer id,Integer placaId) {
 	return mapaActuador.containsKey(Par.of(id, placaId));
