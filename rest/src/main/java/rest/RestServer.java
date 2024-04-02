@@ -26,13 +26,14 @@ public class RestServer extends AbstractVerticle {
 	public void start(Promise<Void> startFuture) {
 		// TODO creamos datos sinteticos
 		apsa = AglutinadorPlacaSensorActuador.getRandomData(5);
+		System.out.println(apsa.toString());
 		// COnfiguramos los datos del gson;
 		// Instantiating a Gson serialize object using specific date format
 		gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create(); // ISO-8601 FTW
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 	Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8070,result->{			if(result.succeeded()) {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8075,result->{			if(result.succeeded()) {
 			startFuture.complete();
 			}else {
 			startFuture.fail("El lanzamiento del servidor ha fallado"+result.cause());
@@ -83,10 +84,14 @@ public class RestServer extends AbstractVerticle {
 		.end(gson.toJson(actuador));
 	}
 private void getSensor(RoutingContext routingContext) {
-	final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
-	final Integer id = routingContext.queryParams().contains("id")?Integer.parseInt(routingContext.queryParam("id").get(0)):null;
+	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+	final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
 	Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
+System.out.println("Placa id vale"+ placaId +"Id Vale " +id );
+System.out.println("la condicion es " +cond);
+System.out.println("Existe sensor:" + apsa.existeSensor(id, placaId));
 	Sensor sensor= cond?apsa.getLastSensor(id, placaId) :null ;
+	System.out.println(sensor);
 	if(sensor!=null) {
 		routingContext.response().
 		putHeader("content-type", "application/json; charset=utf-8").
@@ -121,8 +126,9 @@ private void getAllSensores(RoutingContext routingContext) {
 	setStatusCode(200).end(gson.toJson(lsAux));
 }
 private void getAllActuadores(RoutingContext routingContext) {
-	final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
+	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 	List<Actuador> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastActuadoresList(placaId):  new ArrayList<Actuador>();
+	System.out.println(placaId);
 	routingContext.response().
 	putHeader("content-type", "application/json; charset=utf-8").
 	setStatusCode(200).end(gson.toJson(lsAux));
