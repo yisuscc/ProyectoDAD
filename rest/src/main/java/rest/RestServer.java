@@ -30,6 +30,20 @@ public class RestServer extends AbstractVerticle {
 		// COnfiguramos los datos del gson;
 		// Instantiating a Gson serialize object using specific date format
 		gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create(); // ISO-8601 FTW
+		
+		//TODO:  COnexíon con la base de datos.
+		//mediante la MYSQLConnectOptions.
+		//Nota:el usuario dy contrasena de root es root
+		// Alternativamente PDAD es PDAD.
+		//TODO: Configurar el máximo de pool de conexiones .
+		/*
+		 * Estructura de la base de datos 
+		 * sensor que almacena el id de sensor y placa 
+		 * medición que almacena las mediciones de cada sensor 
+		 * Actuador  que almacena los vlores de un actuador 
+		 * Estados actuador que almacena  los estados de un actuador 
+		 * Placa que almacena el id de la placa
+		 */
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 	Router router = Router.router(vertx);
@@ -41,13 +55,6 @@ public class RestServer extends AbstractVerticle {
 		});
 	
 		// Asociamos las funciones a una api
-		// A modo de orientació, esta es la extructura:
-		/*
-		 * router.post("/api/users").handler(this::addOne);
-		 * router.route("/api/users*").handler(BodyHandler.create());
-		 * router.get("/api/users").handler(this::getAllWithParams);
-		 * router.get("/api/users/user/all").handler(this::getAll);
-		 */
 
 		router.route("/api/*").handler(BodyHandler.create());
 		// DADOS UNA Placa y un id de sensor o actuador
@@ -66,15 +73,15 @@ public class RestServer extends AbstractVerticle {
 		router.get("/api/actuadores/:placaId").handler(this::getAllActuadores);
 		// Opcionales que no te ocupen mucho tiempo
 		// lo mismo que las , 2,3 ,5, pero que te de las x mas recientes
-		//
+		//TODO: hacer una que de la última medición a partir de una hora dada? 
 
 	}
 	// definimos las llamadas del handler 
 	private void setSensor(RoutingContext routingContext) {
-		final Sensor sensor = gson.fromJson(routingContext.getBodyAsString(),Sensor.class);
-		apsa.addSensor(sensor);
+		final Medicion medicion = gson.fromJson(routingContext.getBodyAsString(),Medicion.class);
+		apsa.addSensor(medicion);
 		routingContext.response().setStatusCode(201).putHeader("content-type", "application/json; charset=utf-8")
-		.end(gson.toJson(sensor));
+		.end(gson.toJson(medicion));
 	}
 	private void setActuador(RoutingContext routingContext) {
 		
@@ -87,12 +94,12 @@ private void getSensor(RoutingContext routingContext) {
 	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 	final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
 	//Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
-	Sensor sensor= apsa.getLastSensor(id, placaId);
-	System.out.println(sensor);
-	if(sensor!=null) {
+	Medicion medicion= apsa.getLastSensor(id, placaId);
+	System.out.println(medicion);
+	if(medicion!=null) {
 		routingContext.response().
 		putHeader("content-type", "application/json; charset=utf-8").
-		setStatusCode(200).end(gson.toJson(sensor));
+		setStatusCode(200).end(gson.toJson(medicion));
 	}else {
 		// devuelve un errocete
 		
@@ -120,7 +127,7 @@ private void getActuador(RoutingContext routingContext) {
 private void getAllSensores(RoutingContext routingContext) {
 	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 	//final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
-	List<Sensor> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastSensoresList(placaId):  new ArrayList<Sensor>();
+	List<Medicion> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastSensoresList(placaId):  new ArrayList<Medicion>();
 	routingContext.response().
 	putHeader("content-type", "application/json; charset=utf-8").
 	setStatusCode(200).end(gson.toJson(lsAux));

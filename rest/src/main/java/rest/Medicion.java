@@ -2,7 +2,7 @@ package rest;
 
 import java.util.Objects;
 
-public class Sensor {
+public class Medicion {
 	//almacena los datos 
 	// cada instancia almacena los datos de una medición de un sensor, en un momento dado 
 	//mas que sensor debería ser actuador
@@ -10,7 +10,7 @@ public class Sensor {
 	private Integer placaId; //no estoy seguro de que sirva 
 	private Long timestamp;
 	private Double concentracion;
-	public Sensor(Integer id, Integer placaId, Long timestamp, Double concentracion) {
+	public Medicion(Integer id, Integer placaId, Long timestamp, Double concentracion) {
 		super();
 		this.id = id;
 		this.placaId = placaId;
@@ -58,14 +58,14 @@ public class Sensor {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Sensor other = (Sensor) obj;
+		Medicion other = (Medicion) obj;
 		return Objects.equals(concentracion, other.concentracion) && Objects.equals(id, other.id)
 				&& Objects.equals(placaId, other.placaId) && Objects.equals(timestamp, other.timestamp);
 	}
 
-	public static Sensor random(Integer id , Integer placaId) {
+	public static Medicion random(Integer id , Integer placaId) {
 		Long timestamp = System.currentTimeMillis();
 		Double value = Math.random()*1000;
-		return new Sensor(id, placaId, timestamp, value); 
+		return new Medicion(id, placaId, timestamp, value); 
 	}
 }
