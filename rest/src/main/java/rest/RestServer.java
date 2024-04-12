@@ -18,32 +18,34 @@ import io.vertx.core.Promise;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.mysqlclient.MySQLClient;
+import io.vertx.mysqlclient.MySQLConnectOptions;
+import io.vertx.mysqlclient.MySQLPool;
+import io.vertx.sqlclient.PoolOptions;
 
 public class RestServer extends AbstractVerticle {
 	private Gson gson;
 	private AglutinadorPlacaSensorActuador apsa;
+	private MySQLPool msc;
 
 	public void start(Promise<Void> startFuture) {
-		// TODO creamos datos sinteticos
+		// creamos datos sinteticos
 		apsa = AglutinadorPlacaSensorActuador.getRandomData(5);
 		System.out.println(apsa.toString());
 		// COnfiguramos los datos del gson;
 		// Instantiating a Gson serialize object using specific date format
 		gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create(); // ISO-8601 FTW
 		
-		//TODO:  COnexíon con la base de datos.
+		//todo:  COnexíon con la base de datos.
+		MySQLConnectOptions connectOptions = new MySQLConnectOptions().setPort(3306).setHost("localhost").
+				setDatabase("Proyecto_DAD").setUser("root").setPassword("root");
 		//mediante la MYSQLConnectOptions.
+		PoolOptions poolOptions = new PoolOptions().setMaxSize(37); // por poner un numero
+		msc = MySQLPool.pool(vertx, connectOptions, poolOptions);
 		//Nota:el usuario dy contrasena de root es root
 		// Alternativamente PDAD es PDAD.
 		//TODO: Configurar el máximo de pool de conexiones .
-		/*
-		 * Estructura de la base de datos 
-		 * sensor que almacena el id de sensor y placa 
-		 * medición que almacena las mediciones de cada sensor 
-		 * Actuador  que almacena los vlores de un actuador 
-		 * Estados actuador que almacena  los estados de un actuador 
-		 * Placa que almacena el id de la placa
-		 */
+	
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 	Router router = Router.router(vertx);
@@ -74,7 +76,7 @@ public class RestServer extends AbstractVerticle {
 		// Opcionales que no te ocupen mucho tiempo
 		// lo mismo que las , 2,3 ,5, pero que te de las x mas recientes
 		//TODO: hacer una que de la última medición a partir de una hora dada? 
-
+		//TODO: hacer que devuelv todo los valores del os sensores y actuadores de unmismo group id
 	}
 	// definimos las llamadas del handler 
 	private void setSensor(RoutingContext routingContext) {
