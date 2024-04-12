@@ -9,16 +9,15 @@ DROP TABLE IF EXISTS placas;
 
 
 CREATE TABLE  ` mediciones`(
-`valueId` INT NOT NULL AUTO_INCREMEnT, --esto es solo exclusivo para la bd
+`valueId` INT NOT NULL AUTO_INCREMEnT,
 `medicionId`  INT NOT NULL,
 `placaId`  INT NOT NULL,
 ` concentracion`  DOUBLE NOT NULL,
--- uso timestam o un long --long por ahora
 `fecha`  BIGINT  NOT NULL,
 PRIMARY KEY(`valueId`));
 
 CREATE TABLE  `actuadores`(
-`statusId`  INT NOT NULL AUTO_INCREMENT, --Exclisivo para la db 
+`statusId`  INT NOT NULL AUTO_INCREMENT, 
 `actuadorId`  INT NOT NULL ,
 `placaId`  INT NOT NULL,
 `statusValue`  BOOL NOT NULL,
@@ -27,6 +26,6 @@ PRIMARY KEY(`statusId`));
 
 
 CREATE TABLE  `placas`(
-placaIdDB INT NOT NULL AUTO_INCREMENT,
-placaId INT NOT NULL 
-PRIMARY KEY (placaIdDB));
+`placaIdDB`  INT NOT NULL AUTO_INCREMENT,
+`placaId`  INT NOT NULL,
+PRIMARY KEY (`placaIdDB`));

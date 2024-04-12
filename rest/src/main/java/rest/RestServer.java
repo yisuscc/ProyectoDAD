@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -142,6 +143,9 @@ private void getAllActuadores(RoutingContext routingContext) {
 	putHeader("content-type", "application/json; charset=utf-8").
 	setStatusCode(200).end(gson.toJson(lsAux));
 }
+
+
+
 	// creamos el stop
 	public void stop(Promise<Void> stopPromise) throws Exception {
 		try {
@@ -152,5 +156,24 @@ private void getAllActuadores(RoutingContext routingContext) {
 		}
 		super.stop(stopPromise);
 	}
+	////////////////////////////////////////////////////////////////////////////////////
+	// Funciones Auxiliares 
+	// TODO:  insertador de mediciones y  actuadores
+	 private void insertMedicion(Medicion med) {
+		 //TODO: Completar
+	 }
+	 private  void insertActuador(Actuador act) {
+		 //TODO:COmpletar 
+	 }
+	 private void insertPlaca(Placa placa)
+	 private void generaRandomData(Integer nDATOS) {
+			try {
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		
+		}
+	 }
 
-}
+
