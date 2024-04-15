@@ -31,41 +31,43 @@ public class RestServer extends AbstractVerticle {
 
 	public void start(Promise<Void> startFuture) {
 		// creamos datos sinteticos
-		apsa = AglutinadorPlacaSensorActuador.getRandomData(5);
+		//apsa = AglutinadorPlacaSensorActuador.getRandomData(5);
 		System.out.println(apsa.toString());
 		// COnfiguramos los datos del gson;
 		// Instantiating a Gson serialize object using specific date format
 		gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create(); // ISO-8601 FTW
-		
-		//todo:  COnexíon con la base de datos.
-		MySQLConnectOptions connectOptions = new MySQLConnectOptions().setPort(3306).setHost("localhost").
-				setDatabase("Proyecto_DAD").setUser("root").setPassword("root");
-		//mediante la MYSQLConnectOptions.
+
+		// Conexíon con la base de datos.
+		MySQLConnectOptions connectOptions = new MySQLConnectOptions().setPort(3306).setHost("localhost")
+				.setDatabase("Proyecto_DAD").setUser("root").setPassword("root");
+		// mediante la MYSQLConnectOptions.
 		PoolOptions poolOptions = new PoolOptions().setMaxSize(37); // por poner un numero
 		msc = MySQLPool.pool(vertx, connectOptions, poolOptions);
-		//Nota:el usuario dy contrasena de root es root
+		// Nota:el usuario y contrasena de root es root
 		// Alternativamente PDAD es PDAD.
-		//TODO: Configurar el máximo de pool de conexiones .
-	
+
+		// creamos datos sintéticos
+		generaRandomData(5);
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
-	Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8080,result->{			if(result.succeeded()) {
-			startFuture.complete();
-			}else {
-			startFuture.fail("El lanzamiento del servidor ha fallado"+result.cause());
-							}
+		Router router = Router.router(vertx);
+		vertx.createHttpServer().requestHandler(router::handle).listen(8080, result -> {
+			if (result.succeeded()) {
+				startFuture.complete();
+			} else {
+				startFuture.fail("El lanzamiento del servidor ha fallado" + result.cause());
+			}
 		});
-	
+
 		// Asociamos las funciones a una api
 
 		router.route("/api/*").handler(BodyHandler.create());
 		// DADOS UNA Placa y un id de sensor o actuador
 		// 1primera api añade una medición
 		router.post("/api/sensor").handler(this::setSensor);
-		//  2 devuelve la ultima medición
+		// 2 devuelve la ultima medición
 		router.get("/api/sensor/:placaId/:id").handler(this::getSensor);
-		//  3 devuelve el ultimo  estado de un actuador;
+		// 3 devuelve el ultimo estado de un actuador;
 		router.get("/api/actuador/:placaId/:id").handler(this::getActuador);
 		// 4 añade el estado de un actuador;
 		router.post("/api/actuador").handler(this::setActuador);
@@ -76,75 +78,79 @@ public class RestServer extends AbstractVerticle {
 		router.get("/api/actuadores/:placaId").handler(this::getAllActuadores);
 		// Opcionales que no te ocupen mucho tiempo
 		// lo mismo que las , 2,3 ,5, pero que te de las x mas recientes
-		//TODO: hacer una que de la última medición a partir de una hora dada? 
-		//TODO: hacer que devuelv todo los valores del os sensores y actuadores de unmismo group id
+		// TODO: hacer una que de la última medición a partir de una hora dada?
+		// TODO: hacer que devuelv todo los valores del os sensores y actuadores de
+		// unmismo group id
 	}
-	// definimos las llamadas del handler 
+
+	// definimos las llamadas del handler
 	private void setSensor(RoutingContext routingContext) {
-		final Medicion medicion = gson.fromJson(routingContext.getBodyAsString(),Medicion.class);
+		final Medicion medicion = gson.fromJson(routingContext.getBodyAsString(), Medicion.class);
 		apsa.addSensor(medicion);
 		routingContext.response().setStatusCode(201).putHeader("content-type", "application/json; charset=utf-8")
-		.end(gson.toJson(medicion));
+				.end(gson.toJson(medicion));
 	}
+
 	private void setActuador(RoutingContext routingContext) {
-		
-		final Actuador actuador = gson.fromJson(routingContext.getBodyAsString(),Actuador.class);
+
+		final Actuador actuador = gson.fromJson(routingContext.getBodyAsString(), Actuador.class);
 		apsa.addActuador(actuador);
 		routingContext.response().setStatusCode(201).putHeader("content-type", "application/json; charset=utf-8")
-		.end(gson.toJson(actuador));
+				.end(gson.toJson(actuador));
 	}
-private void getSensor(RoutingContext routingContext) {
-	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-	final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
-	//Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
-	Medicion medicion= apsa.getLastSensor(id, placaId);
-	System.out.println(medicion);
-	if(medicion!=null) {
-		routingContext.response().
-		putHeader("content-type", "application/json; charset=utf-8").
-		setStatusCode(200).end(gson.toJson(medicion));
-	}else {
-		// devuelve un errocete
-		
-		routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404)
-		.end();
+
+	private void getSensor(RoutingContext routingContext) {
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		// Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
+		Medicion medicion = apsa.getLastSensor(id, placaId);
+		System.out.println(medicion);
+		if (medicion != null) {
+			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
+					.end(gson.toJson(medicion));
+		} else {
+			// devuelve un errocete
+
+			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404)
+					.end();
+		}
 	}
-}
-private void getActuador(RoutingContext routingContext) {
+
+	private void getActuador(RoutingContext routingContext) {
 //	final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
 //	final Integer id = routingContext.queryParams().contains("id")?Integer.parseInt(routingContext.queryParam("id").get(0)):null;
-	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-	final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
-	//Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
-	Actuador actuador= apsa.getLastActuador(id, placaId);
-	if(actuador!=null) {
-		routingContext.response().
-		putHeader("content-type", "application/json; charset=utf-8").
-		setStatusCode(200).end(gson.toJson(actuador));
-	}else {
-		routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404)
-		.end();
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		// Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
+		Actuador actuador = apsa.getLastActuador(id, placaId);
+		if (actuador != null) {
+			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
+					.end(gson.toJson(actuador));
+		} else {
+			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404)
+					.end();
+		}
+
 	}
 
-}
-private void getAllSensores(RoutingContext routingContext) {
-	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-	//final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
-	List<Medicion> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastSensoresList(placaId):  new ArrayList<Medicion>();
-	routingContext.response().
-	putHeader("content-type", "application/json; charset=utf-8").
-	setStatusCode(200).end(gson.toJson(lsAux));
-}
-private void getAllActuadores(RoutingContext routingContext) {
-	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-	List<Actuador> lsAux = placaId!= null && apsa.existePlaca(placaId)?apsa.getLastActuadoresList(placaId):  new ArrayList<Actuador>();
-	System.out.println(placaId);
-	routingContext.response().
-	putHeader("content-type", "application/json; charset=utf-8").
-	setStatusCode(200).end(gson.toJson(lsAux));
-}
+	private void getAllSensores(RoutingContext routingContext) {
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		// final Integer placaId =
+		// routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
+		List<Medicion> lsAux = placaId != null && apsa.existePlaca(placaId) ? apsa.getLastSensoresList(placaId)
+				: new ArrayList<Medicion>();
+		routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
+				.end(gson.toJson(lsAux));
+	}
 
-
+	private void getAllActuadores(RoutingContext routingContext) {
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		List<Actuador> lsAux = placaId != null && apsa.existePlaca(placaId) ? apsa.getLastActuadoresList(placaId)
+				: new ArrayList<Actuador>();
+		System.out.println(placaId);
+		routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
+				.end(gson.toJson(lsAux));
+	}
 
 	// creamos el stop
 	public void stop(Promise<Void> stopPromise) throws Exception {
@@ -156,24 +162,28 @@ private void getAllActuadores(RoutingContext routingContext) {
 		}
 		super.stop(stopPromise);
 	}
+
 	////////////////////////////////////////////////////////////////////////////////////
-	// Funciones Auxiliares 
-	// TODO:  insertador de mediciones y  actuadores
-	 private void insertMedicion(Medicion med) {
-		 //TODO: Completar
-	 }
-	 private  void insertActuador(Actuador act) {
-		 //TODO:COmpletar 
-	 }
-	 private void insertPlaca(Placa placa)
-	 private void generaRandomData(Integer nDATOS) {
-			try {
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		
+	// Funciones Auxiliares
+	// TODO: insertador de mediciones y actuadores
+	private void insertMedicion(Medicion med) {
+		// TODO: Completar
+	}
+
+	private void insertActuador(Actuador act) {
+		// TODO:COmpletar
+	}
+
+	private void insertPlaca(Placa placa) {
+		//TODO COmpletar 
+	}
+
+	private void generaRandomData(Integer nDATOS) {
+		try {
+
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-	 }
 
-
+	}
+}
