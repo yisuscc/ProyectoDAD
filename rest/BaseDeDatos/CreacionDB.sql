@@ -31,4 +31,3 @@ CREATE TABLE  `actuadores`(
 PRIMARY KEY(`statusId`),
 FOREIGN KEY(`placaId`)REFERENCES `placas`(`placaId`) );
 
-

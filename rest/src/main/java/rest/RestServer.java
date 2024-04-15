@@ -53,7 +53,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 		Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8050, result -> {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8060, result -> {
 			if (result.succeeded()) {
 				startFuture.complete();
 			} else {
@@ -185,14 +185,22 @@ public class RestServer extends AbstractVerticle {
 
 	}
 
-	private Boolean insertActuador(Actuador act) {
-		return null;
-		// TODO:COmpletar
+	private void insertActuador(Actuador act) {
+		msc.getConnection(c-> {
+			c.result().preparedQuery("INSERT INTO Proyecto_DAD.actuadores(actuadorId, placaId, statusValue, fecha, groupId) VALUES (?,?,?,?,?)").
+			execute(Tuple.of(act.getIdActuador(),act.getPlacaId(),act.getStatus(),act.getTimestamp(),act.getIdGroup()), r->{
+			if(r.succeeded()) {
+				
+			}else {
+				System.out.println("Error:"+r.cause().getLocalizedMessage());
+			}
+			});
+		});
 	}
 
 	private void insertPlaca(Placa placa) {
 		
-		//TODO COmpletar 
+	
 		msc.getConnection(c-> {
 			c.result().preparedQuery("INSERT INTO placas(placaId) VALUES (?)").
 			execute(Tuple.of(placa.getId()), r->{
@@ -217,9 +225,9 @@ public class RestServer extends AbstractVerticle {
 					insertMedicion(med);
 					System.out.println(med);
 					nPlaca++;
-					//insertPlaca(new Placa(nPlaca));
-					//insertActuador(Actuador.random(e, nPlaca, g));
-					//nPlaca++;
+					insertPlaca(new Placa(nPlaca));
+					insertActuador(Actuador.random(e, nPlaca, g));
+					nPlaca++;
 					
 				}
 			}
