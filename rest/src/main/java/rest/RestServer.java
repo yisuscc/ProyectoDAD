@@ -23,6 +23,8 @@ import io.vertx.mysqlclient.MySQLClient;
 import io.vertx.mysqlclient.MySQLConnectOptions;
 import io.vertx.mysqlclient.MySQLPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 
 public class RestServer extends AbstractVerticle {
@@ -78,15 +80,18 @@ public class RestServer extends AbstractVerticle {
 		// sensores de una placa dada;
 		router.get("/api/sensores/:placaId").handler(this::getAllSensores);
 		router.get("/api/actuadores/:placaId").handler(this::getAllActuadores);
+		// TODO: hacer que devuelv todo los valores del os sensores y actuadores de
+		// unmismo group id
+		//TODO: Hacer una devuelva el historico de todos los valores de un sensor o actuador;
 		// Opcionales que no te ocupen mucho tiempo
 		// lo mismo que las , 2,3 ,5, pero que te de las x mas recientes
 		// TODO: hacer una que de la última medición a partir de una hora dada?
-		// TODO: hacer que devuelv todo los valores del os sensores y actuadores de
-		// unmismo group id
+	
 	}
 
 	// definimos las llamadas del handler
 	private void setSensor(RoutingContext routingContext) {
+		//TODO: ADAPTAR
 		final Medicion medicion = gson.fromJson(routingContext.getBodyAsString(), Medicion.class);
 		apsa.addSensor(medicion);
 		routingContext.response().setStatusCode(201).putHeader("content-type", "application/json; charset=utf-8")
@@ -94,7 +99,7 @@ public class RestServer extends AbstractVerticle {
 	}
 
 	private void setActuador(RoutingContext routingContext) {
-
+		//TODO: ADAPTAR
 		final Actuador actuador = gson.fromJson(routingContext.getBodyAsString(), Actuador.class);
 		apsa.addActuador(actuador);
 		routingContext.response().setStatusCode(201).putHeader("content-type", "application/json; charset=utf-8")
@@ -102,28 +107,50 @@ public class RestServer extends AbstractVerticle {
 	}
 
 	private void getSensor(RoutingContext routingContext) {
+		//TODO: ADAPTAR
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
 		// Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
-		Medicion medicion = apsa.getLastSensor(id, placaId);
-		System.out.println(medicion);
-		if (medicion != null) {
-			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
-					.end(gson.toJson(medicion));
-		} else {
-			// devuelve un errocete
-
-			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404)
-					.end();
-		}
+//		Medicion medicion = apsa.getLastSensor(id, placaId);
+//		System.out.println(medicion);
+//		if (medicion != null) {
+//			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
+//					.end(gson.toJson(medicion));
+//		} else {
+//			// devuelve un errocete
+//
+//			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404)
+//					.end();
+//		}
+		msc.getConnection(cn-> {
+			if(cn.succeeded()) {
+				cn.result().preparedQuery("SELECT * FROM mediciones WHERE medicionId = ? AND placaId= ? ORDER BY fecha DESC LIMIT 1 ").
+				execute(Tuple.of(id,placaId),res->{
+					if(res.succeeded()) {
+					RowSet<Row> resultSet = res.result();
+					List<Medicion> result = new ArrayList<>();	
+					for(Row elem : resultSet) {
+						result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"),elem.getLong("fecha"),elem.getDouble("concentracion"),elem.getInteger("groupId")));
+					}
+					System.out.println(result.to);
+					}else {
+						
+					}
+				});
+			}else {
+				System.out.println(cn.cause().toString());
+				
+			}
+		});
 	}
 
 	private void getActuador(RoutingContext routingContext) {
+		//TODO: ADAPTAR
 //	final Integer placaId = routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
 //	final Integer id = routingContext.queryParams().contains("id")?Integer.parseInt(routingContext.queryParam("id").get(0)):null;
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
-		// Boolean cond = placaId!=null && id != null && apsa.existeSensor(id, placaId);
+	
 		Actuador actuador = apsa.getLastActuador(id, placaId);
 		if (actuador != null) {
 			routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
@@ -136,6 +163,7 @@ public class RestServer extends AbstractVerticle {
 	}
 
 	private void getAllSensores(RoutingContext routingContext) {
+		//TODO: ADAPTAR
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 		// final Integer placaId =
 		// routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
@@ -146,6 +174,7 @@ public class RestServer extends AbstractVerticle {
 	}
 
 	private void getAllActuadores(RoutingContext routingContext) {
+		//TODO: ADAPTAR
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 		List<Actuador> lsAux = placaId != null && apsa.existePlaca(placaId) ? apsa.getLastActuadoresList(placaId)
 				: new ArrayList<Actuador>();
