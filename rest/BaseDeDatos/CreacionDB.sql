@@ -11,12 +11,12 @@ CREATE TABLE  `placas`(
 `placaId`  INT NOT NULL,
 PRIMARY KEY (`placaIdDB`));
 CREATE INDEX `placaId_idx` ON `placas` (`placaId`);#me lo ha dicho el gemini de google 
-CREATE TABLE  ` mediciones`(
+CREATE TABLE  `mediciones`(
 `valueId` INT NOT NULL AUTO_INCREMEnT,
 `medicionId`  INT NOT NULL,
 `placaId`  INT NOT NULL,
-` concentracion`  DOUBLE NOT NULL,
-`fecha`  BIGINT  NOT NULL,
+`concentracion`  DOUBLE NOT NULL,
+ `fecha` BIGINT  NOT NULL,
 `groupId` INT NOT NULL,
 PRIMARY KEY(`valueId`),
 FOREIGN KEY(`placaId`)REFERENCES `placas`(`placaId`));
@@ -26,7 +26,7 @@ CREATE TABLE  `actuadores`(
 `actuadorId`  INT NOT NULL ,
 `placaId`  INT NOT NULL,
 `statusValue`  BOOL NOT NULL,
-fecha BIGINT  NOT NULL,
+`fecha` BIGINT  NOT NULL,
 `groupId` INT NOT NULL,
 PRIMARY KEY(`statusId`),
 FOREIGN KEY(`placaId`)REFERENCES `placas`(`placaId`) );

@@ -23,6 +23,7 @@ import io.vertx.mysqlclient.MySQLClient;
 import io.vertx.mysqlclient.MySQLConnectOptions;
 import io.vertx.mysqlclient.MySQLPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.Tuple;
 
 public class RestServer extends AbstractVerticle {
 	private Gson gson;
@@ -32,26 +33,27 @@ public class RestServer extends AbstractVerticle {
 	public void start(Promise<Void> startFuture) {
 		// creamos datos sinteticos
 		//apsa = AglutinadorPlacaSensorActuador.getRandomData(5);
-		System.out.println(apsa.toString());
+		//System.out.println(apsa.toString());
 		// COnfiguramos los datos del gson;
 		// Instantiating a Gson serialize object using specific date format
 		gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create(); // ISO-8601 FTW
 
 		// Conexíon con la base de datos.
 		MySQLConnectOptions connectOptions = new MySQLConnectOptions().setPort(3306).setHost("localhost")
-				.setDatabase("Proyecto_DAD").setUser("root").setPassword("root");
+				.setDatabase("proyecto_dad").setUser("root").setPassword("root");
 		// mediante la MYSQLConnectOptions.
 		PoolOptions poolOptions = new PoolOptions().setMaxSize(37); // por poner un numero
 		msc = MySQLPool.pool(vertx, connectOptions, poolOptions);
+		
 		// Nota:el usuario y contrasena de root es root
 		// Alternativamente PDAD es PDAD.
 
 		// creamos datos sintéticos
-		generaRandomData(5);
+		generaRandomData();
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 		Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8080, result -> {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8050, result -> {
 			if (result.succeeded()) {
 				startFuture.complete();
 			} else {
@@ -155,7 +157,7 @@ public class RestServer extends AbstractVerticle {
 	// creamos el stop
 	public void stop(Promise<Void> stopPromise) throws Exception {
 		try {
-			apsa.clear();
+			msc.close();
 			stopPromise.complete();
 		} catch (Exception e) {
 			stopPromise.fail(e);
@@ -165,22 +167,62 @@ public class RestServer extends AbstractVerticle {
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// Funciones Auxiliares
-	// TODO: insertador de mediciones y actuadores
+	
 	private void insertMedicion(Medicion med) {
-		// TODO: Completar
+				// Creo que es mejor no usarla 
+	
+			msc.getConnection(c-> {
+				c.result().preparedQuery("INSERT INTO Proyecto_DAD.mediciones(medicionId, placaId, concentracion, fecha, groupId) VALUES (?,?,?,?,?)").
+				execute(Tuple.of(med.getIdSensor(),med.getPlacaId(),med.getConcentracion(),med.getTimestamp(),med.getIdGroup()), r->{
+				if(r.succeeded()) {
+					
+				}else {
+					System.out.println("Error:"+r.cause().getLocalizedMessage());
+				}
+				});
+			});
+		
+
 	}
 
-	private void insertActuador(Actuador act) {
+	private Boolean insertActuador(Actuador act) {
+		return null;
 		// TODO:COmpletar
 	}
 
 	private void insertPlaca(Placa placa) {
+		
 		//TODO COmpletar 
+		msc.getConnection(c-> {
+			c.result().preparedQuery("INSERT INTO placas(placaId) VALUES (?)").
+			execute(Tuple.of(placa.getId()), r->{
+			if(r.succeeded()) {
+				
+			}else {
+				System.out.println("Error:"+r.cause().getLocalizedMessage());
+			}
+			});
+		});
 	}
 
-	private void generaRandomData(Integer nDATOS) {
+	private void generaRandomData() {
 		try {
-
+			final int nGroup= 5;// numero de grupos
+			final int nElementos = 5;// numero de sensores y actuadores por cada grupo
+			int nPlaca = 0;
+			for(int g = 0; g<nGroup;g++) {
+				for(int e=0; e<nElementos;e++) {
+					insertPlaca(new Placa(nPlaca));
+					Medicion med = Medicion.random(e, nPlaca, g);
+					insertMedicion(med);
+					System.out.println(med);
+					nPlaca++;
+					//insertPlaca(new Placa(nPlaca));
+					//insertActuador(Actuador.random(e, nPlaca, g));
+					//nPlaca++;
+					
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
