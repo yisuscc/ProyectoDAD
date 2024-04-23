@@ -96,6 +96,7 @@ public class RestServer extends AbstractVerticle {
 
 ////////////////////////////////////////////////////////////////////////////
 	// definimos las llamadas del handler
+	// Idoneamente, para los gets creariamos una funcion auxiliar que se encarga del al conexion a la base de datos.
 	private void setSensor(RoutingContext routingContext) {
 		// TODO: ADAPTAR
 		final Medicion medicion = gson.fromJson(routingContext.getBodyAsString(), Medicion.class);
@@ -112,52 +113,61 @@ public class RestServer extends AbstractVerticle {
 				.end(gson.toJson(actuador));
 	}
 
-	private void getSensor(RoutingContext routingContext) {
-		// TODO: No funciona
+	private void getAllSensor(RoutingContext routingContext) {
+		//Devuelve  todas las mediciones de un sensor
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
-		System.out.println("se ejecuta la petición");
-		msc.getConnection(cn -> {
-			if (cn.succeeded()) {
-				cn.result().preparedQuery(
-						"SELECT * FROM mediciones WHERE medicionId = ? AND placaId= ?")
-						.execute(Tuple.of(id, placaId), res -> {
-							if (res.succeeded()) {
-								System.out.println("Funciona lA QUERY");
-								RowSet<Row> resultSet = res.result();
-								List<Medicion> result = new ArrayList<>();
-								for (Row elem : resultSet) {
-									result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"),
-											elem.getLong("fecha"), elem.getDouble("concentracion"),
-											elem.getInteger("groupId")));
-								}
-								// imprime el mensaje por consola pero no lo envia
-								System.out.println(result.toString());
-								// lo enviamos en el response header con un 200
-								routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
-										.setStatusCode(200).end(gson.toJson(result));
-							} else {
-								System.out.println("Error: " + res.cause().getLocalizedMessage());
-
-							}
-							cn.result().close();
-						});
-			} else {
-				System.out.println(cn.cause().toString());
-				routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
-						.setStatusCode(404).end();
-
+		String query = "SELECT * FROM mediciones WHERE placaId = ? AND medicionId = ? ORDER BY fecha DESC";
+		msc.getConnection(con-> {
+			if(con.succeeded()) {
+				// si la conexion ha tenido exíto 
+				//hacemos la query 
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).
+				execute(Tuple.of(placaId,id),res -> {
+					
+			if(res.succeeded()) {
+				// si la query ha tenido exito
+				// cogemos el resul set
+				RowSet<Row> resultSet = res.result();
+				List<Medicion> result= new ArrayList<>();
+				for(Row elem : resultSet) {
+					// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status, Integer idGroup)
+					result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"), elem.getLong("fecha"), elem.getDouble("concentracion"), elem.getInteger("groupId")));
+				
+				}
+				//para que aparezca en el terminal 
+				System.out.println(result.toString());
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200).
+				end(gson.toJson(result));
+			}else {
+				// si la query no ha tenido exito 
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404).
+				end();
+			}
+			//cerramos la conexion 
+			con.result().close();
+				});
+				
+			}else {
+				// si la conexion no ha tenido exito
+				//imprimimos un mensaje de error
+				System.out.println("Error:"+con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers 
+				// un 500 o un 400? 
+				//Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(500)
+				.end();
 			}
 		});
 	}
 
-	private void getActuador(RoutingContext routingContext) {
-		// TODO: ADAPTAR
+	private void getAllActuador(RoutingContext routingContext) {
+		//Devuelve todos los estados de un actuador.
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
 		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
-		//No se cual es mejor 
-		//String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ORDER BY fecha DESC LIMIT 1";
-		String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ";
+		
+		String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ORDER BY fecha DESC ";
 		msc.getConnection(con-> {
 			if(con.succeeded()) {
 				// si la conexion ha tenido exíto 
@@ -225,16 +235,205 @@ public class RestServer extends AbstractVerticle {
 	
 	
 	private void getLastActuadorGroupId(RoutingContext routingContext) {
-		//TODO
+		// devuelve los ultimos valores de tods los actyuadores de unmismo group id
+		//TODO Cambiar query 
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		
+		String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ORDER BY fecha DESC LIMIT 1";
+		msc.getConnection(con-> {
+			if(con.succeeded()) {
+				// si la conexion ha tenido exíto 
+				//hacemos la query 
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).
+				execute(Tuple.of(placaId,id),res -> {
+					
+			if(res.succeeded()) {
+				// si la query ha tenido exito
+				// cogemos el resul set
+				RowSet<Row> resultSet = res.result();
+				List<Actuador> result= new ArrayList<>();
+				for(Row elem : resultSet) {
+					// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status, Integer idGroup)
+					result.add(new Actuador(elem.getInteger("actuadorId"),elem.getInteger("placaId"),elem.getLong("fecha"),elem.getBoolean("statusValue"),elem.getInteger("idGroup"))); //TODO: Meter los elementos
+				
+				}
+				//para que aparezca en el terminal 
+				System.out.println(result.toString());
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200).
+				end(gson.toJson(result));
+			}else {
+				// si la query no ha tenido exito 
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404).
+				end();
+			}
+			//cerramos la conexion 
+			con.result().close();
+				});
+				
+			}else {
+				// si la conexion no ha tenido exito
+				//imprimimos un mensaje de error
+				System.out.println("Error:"+con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers 
+				// un 500 o un 400? 
+				//Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(500)
+				.end();
+			}
+		});
 	}
 	private void getLastSensorGroupId(RoutingContext routingContext) {
-		//TODO
+		// devuelve los ultimos valores de tods los sensores de unmismo group id
+		//TODO Cambiar query 
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		//No se cual es mejor 
+		String query = "SELECT * FROM mediciones WHERE placaId = ? AND medicionId = ? ORDER BY fecha DESC LIMIT 1";
+		msc.getConnection(con-> {
+			if(con.succeeded()) {
+				// si la conexion ha tenido exíto 
+				//hacemos la query 
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).
+				execute(Tuple.of(placaId,id),res -> {
+					
+			if(res.succeeded()) {
+				// si la query ha tenido exito
+				// cogemos el resul set
+				RowSet<Row> resultSet = res.result();
+				List<Medicion> result= new ArrayList<>();
+				for(Row elem : resultSet) {
+					// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status, Integer idGroup)
+					result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"), elem.getLong("fecha"), elem.getDouble("concentracion"), elem.getInteger("groupId")));
+				
+				}
+				//para que aparezca en el terminal 
+				System.out.println(result.toString());
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200).
+				end(gson.toJson(result));
+			}else {
+				// si la query no ha tenido exito 
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404).
+				end();
+			}
+			//cerramos la conexion 
+			con.result().close();
+				});
+				
+			}else {
+				// si la conexion no ha tenido exito
+				//imprimimos un mensaje de error
+				System.out.println("Error:"+con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers 
+				// un 500 o un 400? 
+				//Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(500)
+				.end();
+			}
+		});
+		
 	}
-	private void getAllSensor(RoutingContext routingContext) {
-		//TODO
+	private void getSensor(RoutingContext routingContext) {
+		//Devuelve la última medición de un sensor
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		//No se cual es mejor 
+		String query = "SELECT * FROM mediciones WHERE placaId = ? AND medicionId = ? ORDER BY fecha DESC LIMIT 1";
+		msc.getConnection(con-> {
+			if(con.succeeded()) {
+				// si la conexion ha tenido exíto 
+				//hacemos la query 
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).
+				execute(Tuple.of(placaId,id),res -> {
+					
+			if(res.succeeded()) {
+				// si la query ha tenido exito
+				// cogemos el resul set
+				RowSet<Row> resultSet = res.result();
+				List<Medicion> result= new ArrayList<>();
+				for(Row elem : resultSet) {
+					// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status, Integer idGroup)
+					result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"), elem.getLong("fecha"), elem.getDouble("concentracion"), elem.getInteger("groupId")));
+				
+				}
+				//para que aparezca en el terminal 
+				System.out.println(result.toString());
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200).
+				end(gson.toJson(result));
+			}else {
+				// si la query no ha tenido exito 
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404).
+				end();
+			}
+			//cerramos la conexion 
+			con.result().close();
+				});
+				
+			}else {
+				// si la conexion no ha tenido exito
+				//imprimimos un mensaje de error
+				System.out.println("Error:"+con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers 
+				// un 500 o un 400? 
+				//Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(500)
+				.end();
+			}
+		});
+
 	}
-	private void getAllActuador(RoutingContext routingContext) {
-		//TODO 
+	private void getActuador(RoutingContext routingContext) {
+//Devuelve  el ultimo valor de un cactuador especifico
+		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		//No se cual es mejor 
+		String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ORDER BY fecha DESC LIMIT 1";
+		msc.getConnection(con-> {
+			if(con.succeeded()) {
+				// si la conexion ha tenido exíto 
+				//hacemos la query 
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).
+				execute(Tuple.of(placaId,id),res -> {
+					
+			if(res.succeeded()) {
+				// si la query ha tenido exito
+				// cogemos el resul set
+				RowSet<Row> resultSet = res.result();
+				List<Actuador> result= new ArrayList<>();
+				for(Row elem : resultSet) {
+					// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status, Integer idGroup)
+					result.add(new Actuador(elem.getInteger("actuadorId"),elem.getInteger("placaId"),elem.getLong("fecha"),elem.getBoolean("statusValue"),elem.getInteger("idGroup"))); //TODO: Meter los elementos
+				
+				}
+				//para que aparezca en el terminal 
+				System.out.println(result.toString());
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200).
+				end(gson.toJson(result));
+			}else {
+				// si la query no ha tenido exito 
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(404).
+				end();
+			}
+			//cerramos la conexion 
+			con.result().close();
+				});
+				
+			}else {
+				// si la conexion no ha tenido exito
+				//imprimimos un mensaje de error
+				System.out.println("Error:"+con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers 
+				// un 500 o un 400? 
+				//Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(500)
+				.end();
+			}
+		});
+
 	}
 
 	// creamos el stop
