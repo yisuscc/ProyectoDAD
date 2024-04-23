@@ -31,3 +31,13 @@ CREATE TABLE  `actuadores`(
 PRIMARY KEY(`statusId`),
 FOREIGN KEY(`placaId`)REFERENCES `placas`(`placaId`) );
 
+INSERT INTO placas(placaId) VALUES (0),(1),(2);
+INSERT INTO Proyecto_DAD.actuadores(actuadorId, placaId, statusValue, fecha, groupId) VALUES
+(0,0,true,UNIX_TIMESTAMP(NOW()),0),
+(1,1,true,UNIX_TIMESTAMP(NOW()),1),
+(2,2,true,UNIX_TIMESTAMP(NOW()),2);
+INSERT INTO Proyecto_DAD.mediciones(medicionId, placaId, concentracion, fecha, groupId) VALUES 
+(0,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),0),
+(1,1,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),1),
+(2,2,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),2);
+
