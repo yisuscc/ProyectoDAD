@@ -79,10 +79,13 @@ public class RestServer extends AbstractVerticle {
 		router.get("/api/sensores/:placaId").handler(this::getAllSensores);
 		router.get("/api/actuadores/:placaId").handler(this::getAllActuadores);
 
-		// TODO: Hacer que devuelv todo los valores del os sensores y actuadores de
+		// TODO: Hacer que devuelva los ultimos valores de todos los sensores y actuadores de
 		// un mismo group id
 		router.get("/api/lastactuadorGroupId/:groupId").handler(this::getLastActuadorGroupId);
 		router.get("/api/lastsensorGroupId/:groupId").handler(this::getLastSensorGroupId);
+		//Devuelve todos los valores de todos los valores y sensores de un mismo group id
+		router.get("/api/allactuadorGroupId/:groupId").handler(this::getAllActuadorGroupID);
+		router.get("/api/allsensorGroupId/:groupId").handler(this::getAllSensorGroupID);
 		// Hacer una devuelva el historico de todos los valores de un sensor o
 		// actuador;
 		router.get("/api/allsensor/:placaId/:id").handler(this::getAllSensor);
@@ -359,7 +362,18 @@ public class RestServer extends AbstractVerticle {
 		});
 
 	}
-
+private void getAllSensorGroupID(RoutingContext routingContext) {
+	final Integer groupId = Integer.parseInt(routingContext.request().getParam("groupId"));
+	String query = "SELECT * FROM mediciones WHERE groupId = ?";
+	Tuple tuple = Tuple.of(groupId);
+	retrieveSensorDB(query, tuple, routingContext);
+}
+private void getAllActuadorGroupID(RoutingContext routingContext) {
+	final Integer groupId = Integer.parseInt(routingContext.request().getParam("groupId"));
+	String query = "SELECT * FROM actuadores WHERE groupId = ?";
+	Tuple tuple = Tuple.of(groupId);
+	retrieveActuadorDB(query, tuple, routingContext);
+}
 	private void getSensor(RoutingContext routingContext) {
 		// Devuelve la última medición de un sensor
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
