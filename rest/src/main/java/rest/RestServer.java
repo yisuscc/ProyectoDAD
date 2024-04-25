@@ -53,7 +53,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 		Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8051, result -> {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8091, result -> {
 			if (result.succeeded()) {
 				startFuture.complete();
 			} else {
@@ -303,49 +303,7 @@ public class RestServer extends AbstractVerticle {
 		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
 
 		String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ORDER BY fecha DESC LIMIT 1";
-		msc.getConnection(con -> {
-			if (con.succeeded()) {
-				// si la conexion ha tenido exíto
-				// hacemos la query
-				System.out.println("Conexion exitosa");
-				con.result().preparedQuery(query).execute(Tuple.of(placaId, id), res -> {
-
-					if (res.succeeded()) {
-						// si la query ha tenido exito
-						// cogemos el resul set
-						RowSet<Row> resultSet = res.result();
-						List<Actuador> result = new ArrayList<>();
-						for (Row elem : resultSet) {
-							// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status,
-							// Integer idGroup)
-							result.add(new Actuador(elem.getInteger("actuadorId"), elem.getInteger("placaId"),
-									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("idGroup")));
-
-						}
-						// para que aparezca en el terminal
-						System.out.println(result.toString());
-						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
-								.setStatusCode(200).end(gson.toJson(result));
-					} else {
-						// si la query no ha tenido exito
-						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
-								.setStatusCode(404).end();
-					}
-					// cerramos la conexion
-					con.result().close();
-				});
-
-			} else {
-				// si la conexion no ha tenido exito
-				// imprimimos un mensaje de error
-				System.out.println("Error:" + con.cause().toString());
-				// adicionalmente devolmvemos un mensaje de error en elos headers
-				// un 500 o un 400?
-				// Creo que un 500 ya que es problema entre vertx y la bbdd
-				routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
-						.setStatusCode(500).end();
-			}
-		});
+		
 	}
 
 	private void getLastSensorGroupId(RoutingContext routingContext) {

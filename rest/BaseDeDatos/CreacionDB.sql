@@ -47,3 +47,30 @@ INSERT INTO Proyecto_DAD.mediciones(medicionId, placaId, concentracion, fecha, g
 (2,2,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),2),
 (2,2,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW())+1,2);
 
+DELIMITER //
+
+CREATE TRIGGER AddPlacaOnMeasurementInsertBefore
+BEFORE INSERT ON mediciones
+FOR EACH ROW
+BEGIN
+  IF NOT EXISTS (SELECT * FROM placas WHERE placaId = NEW.placaId) THEN
+    INSERT INTO placas (placaId) VALUES (NEW.placaId);
+  END IF;
+END //
+
+DELIMITER ;
+DELIMITER //
+CREATE TRIGGER AddPlacaOnActuadorInsertBefore
+BEFORE INSERT ON actuadores
+FOR EACH ROW
+BEGIN
+  IF NOT EXISTS (SELECT * FROM placas WHERE placaId = NEW.placaId) THEN
+    INSERT INTO placas (placaId) VALUES (NEW.placaId);
+  END IF;
+END //
+
+DELIMITER ;
+
+ 
+
+
