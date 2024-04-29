@@ -42,6 +42,10 @@ INSERT INTO Proyecto_DAD.actuadores(actuadorId, placaId, statusValue, fecha, gro
 INSERT INTO Proyecto_DAD.mediciones(medicionId, placaId, concentracion, fecha, groupId) VALUES 
 (0,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),0),
 (0,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW())+1,0),
+(0,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW())+3,0),
+(0,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW())+50,0),
+(20,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW())+70,0),
+(20,0,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),0),
 (1,1,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),1),
 (1,1,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW())+1,1),
 (2,2,FLOOR(RAND() * 1000),UNIX_TIMESTAMP(NOW()),2),

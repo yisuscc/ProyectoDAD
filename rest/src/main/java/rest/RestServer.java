@@ -2,10 +2,13 @@ package rest;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -53,7 +56,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 		Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8034, result -> {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8035, result -> {
 			if (result.succeeded()) {
 				startFuture.complete();
 			} else {
@@ -301,19 +304,104 @@ public class RestServer extends AbstractVerticle {
 
 	private void getLastActuadorGroupId(RoutingContext routingContext) {
 		// devuelve los ultimos valores de tods los actyuadores de unmismo group id
-		// TODO Cambiar query
-		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-		final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+		
+		final Integer groupId = Integer.parseInt(routingContext.request().getParam("groupId"));
+		String query = "SELECT * FROM actuadores WHERE groupId = ?";
+		Tuple tupla = Tuple.of(groupId);
+		msc.getConnection(con -> {
+			if (con.succeeded()) {
+				// si la conexion ha tenido exíto
+				// hacemos la query
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).execute(tupla), res -> {
 
-		String query = "SELECT * FROM actuadores WHERE placaId = ? AND actuadorId = ? ORDER BY fecha DESC LIMIT 1";
+					if (res.succeeded()) {
+						// si la query ha tenido exito
+						// cogemos el resul set
+						RowSet<Row> resultSet = res.result();
+						List<Actuador> result = new ArrayList<>();
+						for (Row elem : resultSet) {
+							// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status,
+							// Integer idGroup)
+							result.add(new Actuador(elem.getInteger("actuadorId"), elem.getInteger("placaId"),
+									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("idGroup")));
+						}
+						// para que aparezca en el terminal
+						result = ultimoActuadoresGroupID(result);
+						System.out.println(result.toString());
+						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+								.setStatusCode(200).end(gson.toJson(result));
+					} else {
+						// si la query no ha tenido exito
+						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+								.setStatusCode(404).end();
+					}
+					// cerramos la conexion
+					con.result().close();
+				});
+
+			} else {
+				// si la conexion no ha tenido exito
+				// imprimimos un mensaje de error
+				System.out.println("Error:" + con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers
+				// un 500 o un 400?
+				// Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+						.setStatusCode(500).end();
+			}
+		});
+	
 		
 	}
 
 	private void getLastSensorGroupId(RoutingContext routingContext) {
 		// devuelve los ultimos valores de todos los sensores de unmismo group id
-		// TODO Cambiar query
+		
 		final Integer groupId = Integer.parseInt(routingContext.request().getParam("groupId"));
-		String query = "";
+		String query = "SELECT * FROM mediciones WHERE groupId = ?";
+		Tuple tupla = Tuple.of(groupId);
+		msc.getConnection(con -> {
+			if (con.succeeded()) {
+				
+				System.out.println("Conexion exitosa");
+				con.result().preparedQuery(query).execute(tupla, res -> {
+
+					if (res.succeeded()) {
+						
+						RowSet<Row> resultSet = res.result();
+						List<Medicion> result = new ArrayList<>();
+						for (Row elem : resultSet) {
+							
+							result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"),
+									elem.getLong("fecha"), elem.getDouble("concentracion"),
+									elem.getInteger("groupId")));
+
+						}
+						result = ultimoSensoresGroupID(result);
+						System.out.println(result.toString());
+						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+								.setStatusCode(200).end(gson.toJson(result));
+					} else {
+						// si la query no ha tenido exito
+						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+								.setStatusCode(404).end();
+					}
+					// cerramos la conexion
+					con.result().close();
+				});
+
+			} else {
+				// si la conexion no ha tenido exito
+				// imprimimos un mensaje de error
+				System.out.println("Error:" + con.cause().toString());
+				// adicionalmente devolmvemos un mensaje de error en elos headers
+				// un 500 o un 400?
+				// Creo que un 500 ya que es problema entre vertx y la bbdd
+				routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+						.setStatusCode(500).end();
+			}
+		});
 
 	}
 private void getAllSensorGroupID(RoutingContext routingContext) {
@@ -446,7 +534,21 @@ private void getAllActuadorGroupID(RoutingContext routingContext) {
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// Funciones Auxiliares olvidarse de ellas, son perjudiciales para la salud
-	//////////////////////////////////////////////////////////////////////////////////// mental
+	//////////////////////////////////////////////////////////////////////////////////// 
+	private static List<Medicion>ultimoSensoresGroupID(List<Medicion> sensores){
+		Collection<Medicion> coleccion= sensores.stream().collect(Collectors.
+				groupingBy(m-> Par.of(m.getIdSensor(),m.getPlacaId()),
+						HashMap::new,Collectors.collectingAndThen(Collectors.maxBy(
+								Comparator.comparing(Medicion::getTimestamp)),Optional::get))).values();
+		return new ArrayList<Medicion>(coleccion);
+	}
+	private static List<Actuador>ultimoActuadoresGroupID(List<Actuador> actuadores){
+		Collection<Actuador> coleccion= actuadores.stream().collect(Collectors.
+				groupingBy(a->Par.of(a.getIdActuador(),a.getPlacaId()),
+						HashMap::new,Collectors.collectingAndThen(Collectors.maxBy(
+								Comparator.comparing(Actuador::getTimestamp)),Optional::get))).values();
+		return new ArrayList<Actuador>(coleccion);
+	}
 	private void retrieveSensorDB(String query, Tuple tuple, RoutingContext routingContext) {
 		msc.getConnection(con -> {
 			if (con.succeeded()) {
