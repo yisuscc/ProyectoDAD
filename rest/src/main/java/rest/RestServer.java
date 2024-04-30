@@ -56,7 +56,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 		Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8035, result -> {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8039, result -> {
 			if (result.succeeded()) {
 				startFuture.complete();
 			} else {
@@ -82,7 +82,7 @@ public class RestServer extends AbstractVerticle {
 		router.get("/api/sensores/:placaId").handler(this::getAllSensores);
 		router.get("/api/actuadores/:placaId").handler(this::getAllActuadores);
 
-		// TODO: Hacer que devuelva los ultimos valores de todos los sensores y actuadores de
+		//  Hacer que devuelva los ultimos valores de todos los sensores y actuadores de
 		// un mismo group id
 		router.get("/api/lastactuadorGroupId/:groupId").handler(this::getLastActuadorGroupId);
 		router.get("/api/lastsensorGroupId/:groupId").handler(this::getLastSensorGroupId);
@@ -253,7 +253,7 @@ public class RestServer extends AbstractVerticle {
 							// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status,
 							// Integer idGroup)
 							result.add(new Actuador(elem.getInteger("actuadorId"), elem.getInteger("placaId"),
-									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("idGroup")));
+									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("groupId")));
 						}
 						// para que aparezca en el terminal
 						System.out.println(result.toString());
@@ -282,24 +282,20 @@ public class RestServer extends AbstractVerticle {
 	}
 
 	private void getAllSensores(RoutingContext routingContext) {
-		// TODO: ADAPTAR
-		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-		// final Integer placaId =
-		// routingContext.queryParams().contains("placaId")?Integer.parseInt(routingContext.queryParam("placaId").get(0)):null;
-		List<Medicion> lsAux = placaId != null && apsa.existePlaca(placaId) ? apsa.getLastSensoresList(placaId)
-				: new ArrayList<Medicion>();
-		routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
-				.end(gson.toJson(lsAux));
+		 
+	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+	String query = "SELECT * FROM mediciones WHERE placaId = ?";
+	Tuple tupla = Tuple.of(placaId);
+	retrieveSensorDB(query,tupla, routingContext);
 	}
 
 	private void getAllActuadores(RoutingContext routingContext) {
-		// TODO: ADAPTAR
+		
 		final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
-		List<Actuador> lsAux = placaId != null && apsa.existePlaca(placaId) ? apsa.getLastActuadoresList(placaId)
-				: new ArrayList<Actuador>();
-		System.out.println(placaId);
-		routingContext.response().putHeader("content-type", "application/json; charset=utf-8").setStatusCode(200)
-				.end(gson.toJson(lsAux));
+		String query = "SELECT * FROM actuadores WHERE placaId = ?";
+		Tuple tupla = Tuple.of(placaId);
+		retrieveActuadorDB(query, tupla, routingContext);
+		
 	}
 
 	private void getLastActuadorGroupId(RoutingContext routingContext) {
@@ -310,23 +306,20 @@ public class RestServer extends AbstractVerticle {
 		Tuple tupla = Tuple.of(groupId);
 		msc.getConnection(con -> {
 			if (con.succeeded()) {
-				// si la conexion ha tenido exíto
-				// hacemos la query
+				
 				System.out.println("Conexion exitosa");
-				con.result().preparedQuery(query).execute(tupla), res -> {
+				con.result().preparedQuery(query).execute(tupla, res -> {
 
 					if (res.succeeded()) {
-						// si la query ha tenido exito
-						// cogemos el resul set
+						
 						RowSet<Row> resultSet = res.result();
 						List<Actuador> result = new ArrayList<>();
 						for (Row elem : resultSet) {
-							// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status,
-							// Integer idGroup)
+							
 							result.add(new Actuador(elem.getInteger("actuadorId"), elem.getInteger("placaId"),
-									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("idGroup")));
+									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("groupId")));
+
 						}
-						// para que aparezca en el terminal
 						result = ultimoActuadoresGroupID(result);
 						System.out.println(result.toString());
 						routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
@@ -351,7 +344,6 @@ public class RestServer extends AbstractVerticle {
 						.setStatusCode(500).end();
 			}
 		});
-	
 		
 	}
 
@@ -491,7 +483,7 @@ private void getAllActuadorGroupID(RoutingContext routingContext) {
 							// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status,
 							// Integer idGroup)
 							result.add(new Actuador(elem.getInteger("actuadorId"), elem.getInteger("placaId"),
-									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("idGroup")));
+									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("groupId")));
 
 						}
 						// para que aparezca en el terminal
@@ -613,7 +605,7 @@ private void getAllActuadorGroupID(RoutingContext routingContext) {
 							// Actuador(Integer idActuador, Integer placaId, Long timestamp, Boolean status,
 							// Integer idGroup)
 							result.add(new Actuador(elem.getInteger("actuadorId"), elem.getInteger("placaId"),
-									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("idGroup")));
+									elem.getLong("fecha"), elem.getBoolean("statusValue"), elem.getInteger("groupId")));
 
 						}
 						// para que aparezca en el terminal
