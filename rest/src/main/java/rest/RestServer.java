@@ -37,8 +37,8 @@ import io.vertx.sqlclient.Tuple;
 public class RestServer extends AbstractVerticle {
 	// parmetros modificables:
 	final String ipMqttServer = "localhost";
-	final Integer puertoAPIRest = 8039;
-	final Double umbral = 0.0;
+	final Integer puertoAPIRest = 8043;
+	final Double umbral = 37.0;
 	// variabless privadas e inmodificables
 	private Gson gson;
 	private MySQLPool msc;
@@ -62,7 +62,7 @@ public class RestServer extends AbstractVerticle {
 		 */
 		// 3) inicializamos el mqtt
 		mqttClient = MqttClient.create(vertx, new MqttClientOptions().setAutoKeepAlive(true));
-		mqttClient.connect(1883, ipMqttServer, s -> System.out.println("Conexión al broker"));
+		mqttClient.connect(1883, ipMqttServer, s -> sendMessage("1234", "Hola"));
 
 		// 4)Definimos el router
 		// que se encarga de coger las apis y redirigirlas
@@ -135,29 +135,17 @@ public class RestServer extends AbstractVerticle {
 										.setStatusCode(200).end(gson.toJson(medicion));
 								// TODO Lógica mqttt;
 								// 1) obtenemos la ultima medición de cada sensor:
-								List<Medicion> ultimasMediciones = obtainLastMeasurementsFromGroupId(
-										medicion.getIdGroup());// TODO implementar
+								//List<Medicion> ultimasMediciones = obtainLastMeasurementsFromGroupId(
+										//medicion.getIdGroup());// TODO implementar
 								/*
 								 * Esto dependerá de la logica que implementemos: 2 opciones: 1. que cuando
 								 * cualquiera de los sensores supere el umbral se active 2.(descartada) que
 								 * cuando la media de los sensores supere el umbral se activen
 								 */
 								// 2) evaluamos la condicion
-								Boolean condicion = false;// alguno de los sensores es mayor o igual que el umbral
-								for (Medicion m : ultimasMediciones) {
-									if (m.getConcentracion() >= umbral)
-										;
-									condicion = true;
-									break;
-								}
-								if (condicion) {
-									// encendemos todos los sensores
-
-									sendMessage(topic, "1");
-								} else {
-									// apagamos todos los sensores
-									sendMessage(topic, "0");
-								}
+								checkCondition(medicion.getIdGroup());
+								System.out.println("condicion evaluada");
+							
 
 							} else {
 								// si la query no ha tenido exito
@@ -577,9 +565,11 @@ public class RestServer extends AbstractVerticle {
 			});
 
 	}
+	
+	
 
 	private List<Medicion> obtainLastMeasurementsFromGroupId(Integer idGroup) {
-		// TODO: COmprobar funciionamiento
+		// TODO: COmprobar funciionamiento parece que no funciona
 		List<Medicion> resultados = new ArrayList<Medicion>();
 		String query = "SELECT * FROM mediciones WHERE groupId = ?";
 		Tuple tupla = Tuple.of(idGroup);
@@ -737,74 +727,57 @@ public class RestServer extends AbstractVerticle {
 		});
 	}
 
-///////////////Funciones Obsoletas//////////////////////////////////////////////
-	private void insertMedicion(Medicion med) {
-		// Creo que es mejor no usarla
+private void checkCondition(Integer groupID) {
+	//final Integer groupId = Integer.parseInt(routingContext.request().getParam("groupId"));
+	String query = "SELECT * FROM mediciones WHERE groupId = ?";
+	Tuple tupla = Tuple.of(groupID);
+	msc.getConnection(con -> {
+		if (con.succeeded()) {
 
-		msc.getConnection(c -> {
-			c.result().preparedQuery(
-					"INSERT INTO Proyecto_DAD.mediciones(medicionId, placaId, concentracion, fecha, groupId) VALUES (?,?,?,?,?)")
-					.execute(Tuple.of(med.getIdSensor(), med.getPlacaId(), med.getConcentracion(), med.getTimestamp(),
-							med.getIdGroup()), r -> {
-								if (r.succeeded()) {
+			System.out.println("Conexion exitosa");
+			con.result().preparedQuery(query).execute(tupla, res -> {
 
-								} else {
-									System.out.println("Error:" + r.cause().getLocalizedMessage());
-								}
-							});
-			c.result().close();
-		});
+				if (res.succeeded()) {
 
-	}
+					RowSet<Row> resultSet = res.result();
+					List<Medicion> result = new ArrayList<>();
+					for (Row elem : resultSet) {
 
-	private void insertActuador(Actuador act) {
-		msc.getConnection(c -> {
-			c.result().preparedQuery(
-					"INSERT INTO Proyecto_DAD.actuadores(actuadorId, placaId, statusValue, fecha, groupId) VALUES (?,?,?,?,?)")
-					.execute(Tuple.of(act.getIdActuador(), act.getPlacaId(), act.getStatus(), act.getTimestamp(),
-							act.getIdGroup()), r -> {
-								if (r.succeeded()) {
+						result.add(new Medicion(elem.getInteger("medicionId"), elem.getInteger("placaId"),
+								elem.getLong("fecha"), elem.getDouble("concentracion"),
+								elem.getInteger("groupId")));
 
-								} else {
-									System.out.println("Error:" + r.cause().getLocalizedMessage());
-								}
-							});
-			c.result().close();
-		});
-	}
-
-	private void insertPlaca(Placa placa) {
-
-		msc.getConnection(c -> {
-			c.result().preparedQuery("INSERT INTO placas(placaId) VALUES (?)").execute(Tuple.of(placa.getId()), r -> {
-				if (r.succeeded()) {
-
+					}
+					result = ultimoSensoresGroupID(result);
+					System.out.println(result.toString());
+					Boolean cond = false;
+					for (Medicion med : result) {
+						if(med.getConcentracion()>= umbral) {
+							cond = true;
+							break;
+					}
+					}
+					if(cond) {
+						sendMessage(groupID.toString(), "1");// 
+					}else {
+						sendMessage(groupID.toString(), "0");
+					}
 				} else {
-					System.out.println("Error:" + r.cause().getLocalizedMessage());
+					// si la query no ha tenido exito
+
 				}
+				// cerramos la conexion
+				con.result().close();
 			});
-			c.result().close();
-		});
-	}
 
-	private void generaRandomData() {
-		try {
-			final int nGroup = 5;// numero de grupos
-			final int nElementos = 5;// numero de sensores y actuadores por cada grupo
-			int nPlaca = 0;
-			for (int g = 0; g < nGroup; g++) {
-				for (int e = 0; e < nElementos; e++) {
-					insertPlaca(new Placa(nPlaca));
-					Medicion med = Medicion.random(e, nPlaca, g);
-					insertMedicion(med);
-					insertActuador(Actuador.random(e, nPlaca, g));
-					nPlaca++;
+		} else {
+			// si la conexion no ha tenido exito
+			System.out.println("Error:" + con.cause().toString());
 
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
+	});
 
-	}
 }
+	
+}
+
