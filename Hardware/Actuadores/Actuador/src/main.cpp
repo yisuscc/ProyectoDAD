@@ -27,6 +27,12 @@ const char *MQTT_CLIENT_NAME = "ArduinoClient_1"; //TODO Cambiar
 
 void setup() {
   // put your setup code here, to run once:
+  //1 configuramos el pin del rele
+  //2 conexion puerto serie
+  Serial.begin(9600);
+  //3 conexion wifi
+  IniWifi();
+  //4 conexion mqtt 
 
 }
 
@@ -44,4 +50,30 @@ void InitMqtt(){
   // para inicializar el mqqt
    client.setServer(MQTT_BROKER_ADRESS, MQTT_PORT);
   client.setCallback(OnMqttReceived);
+}
+void IniWifi(){
+  //TODO
+}
+void iniHardware(){
+  //TODO
+  //aqui colocamos los pines del relé 
+
+}
+void ConnectMqtt(){
+  //TODO
+   Serial.print("Starting MQTT connection...");
+  if (client.connect(MQTT_CLIENT_NAME))
+  {
+    client.subscribe("hello/world");
+    client.publish("hello/world", "connected");
+  }
+  else
+  {
+    Serial.print("Failed MQTT connection, rc=");
+    Serial.print(client.state());
+    Serial.println(" try again in 5 seconds");
+
+    delay(5000);
+  }
+
 }
