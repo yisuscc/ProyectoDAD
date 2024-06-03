@@ -133,7 +133,7 @@ public class RestServer extends AbstractVerticle {
 								System.out.println("Insertado: " + medicion.toString());
 								routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
 										.setStatusCode(200).end(gson.toJson(medicion));
-								// TODO Lógica mqttt;
+								// Lógica mqttt;
 								// 1) obtenemos la ultima medición de cada sensor:
 								//List<Medicion> ultimasMediciones = obtainLastMeasurementsFromGroupId(
 										//medicion.getIdGroup());// TODO implementar

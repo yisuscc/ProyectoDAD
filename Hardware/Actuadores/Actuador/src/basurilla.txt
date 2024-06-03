@@ -1,0 +1,143 @@
+// defines y variables globales 
+
+const int DEVICE_ID = 124; // esto no sé muy bien para qué sirve.
+int test_delay = 1000; //parece un delay  para las peticiones a la api
+boolean describe_tests = true; //no sé para que sirve
+// ubicacion del servidor de la api rest?
+String serverName = "http://192.168.1.178/";//TODO Cambiar
+HTTPClient http;
+//Credenciales de la red wifi 
+#define STASSID "Your_Wifi_SSID"    //"Your_Wifi_SSID"
+#define STAPSK "Your_Wifi_PASSWORD" //"Your_Wifi_PASSWORD"
+
+//configuración del mqttt
+WiFiClient espClient;
+PubSubClient client(espClient);
+const char *MQTT_BROKER_ADRESS = "192.168.1.154"; //en micaso coincide con la del server rest
+const uint16_t MQTT_PORT = 1883;
+
+const char *MQTT_CLIENT_NAME = "ArduinoClient_1"; //TODO Cambiar
+// LAs variables a enviar del actuador 
+const int placaID = 1234;// CAmbiar siempre que sea necesario
+#define groupID 1234
+const int groupID2 = groupID;
+const int actuadorID = 1234;
+// el timestamp lo generamos luego
+boolean status;
+//Pines del actuador 
+int relay = 21;// CAmbiar 
+
+////////////////////////////FUNCIONES ///////////////////////
+// put function definitions here:
+//funciones relacionadas con JSON
+ String creaJSON(long timestamp, boolean estado){
+    DynamicJsonDocument doc(2048);
+    doc["idActuador"]= actuadorID;
+    doc["placaId"] = placaID;
+    doc["timestamp"] = timestamp;
+    doc["status"] = estado;
+    doc["idGroup"] = groupID;
+    String str;
+    serializeJson(doc, str);
+    return str;
+  }
+  void describe(char *description)
+{
+  if (describe_tests)
+    Serial.println(description);
+}
+void sendPost(String json ){
+  
+
+  describe("Enviamos el estado del actuador");
+  String serverPath = serverName + "/api/actuador";
+  http.begin(serverPath.c_str());
+  test_response(http.POST(json));
+}
+void OnMqttReceived(char *topic, byte *payload, unsigned int length)
+{
+  Serial.print("Received on ");
+  Serial.print(topic);
+  Serial.print(": ");
+
+  String content = "";
+  for (size_t i = 0; i < length; i++)
+  {
+    content.concat((char)payload[i]);
+  }
+ if(content=="1"){
+  digitalWrite(relay,HIGH);
+
+ }else if(content =="0"){
+  digitalWrite(relay,LOW);
+ }
+ status = digitalRead(relay)==HIGH?true:false;
+ //enviamos el estado del actuador
+sendPost(creaJSON());
+}
+void InitMqtt(){
+  
+  // para inicializar el mqqt
+  client.setServer(MQTT_BROKER_ADRESS, MQTT_PORT);
+  client.setCallback(OnMqttReceived);
+}
+void IniWifi(){
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(STASSID, STAPSK);
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+}
+
+void ConnectMqtt(){
+  
+   Serial.print("Starting MQTT connection...");
+  if (client.connect(MQTT_CLIENT_NAME))
+  { //cambiar evidentemente 
+  String grupo = String(groupID);
+  //TODO MOdificar
+    //client.subscribe(grupo); // no se porqué da error 
+    //client.publish("hello/world", "connected");
+  }
+  else
+  {
+    Serial.print("Failed MQTT connection, rc=");
+    Serial.print(client.state());
+    Serial.println(" try again in 5 seconds");
+
+    delay(5000);
+  }
+}
+void test_response(int httpResponseCode)
+{
+  delay(test_delay);
+  if (httpResponseCode > 0)
+  {
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    String payload = http.getString();
+    Serial.println(payload);
+  }
+  else
+  {
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
+  }
+}
+
+void describe(char *description)
+{
+  if (describe_tests)
+    Serial.println(description);
+}
+void sendPost(String json ){
+  
+
+  describe("Enviamos el estado del actuador");
+  String serverPath = serverName + "/api/actuador";
+  http.begin(serverPath.c_str());
+  test_response(http.POST(json));
+}
