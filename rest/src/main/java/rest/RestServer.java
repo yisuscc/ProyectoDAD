@@ -37,8 +37,8 @@ import io.vertx.sqlclient.Tuple;
 public class RestServer extends AbstractVerticle {
 	// parmetros modificables:
 	final String ipMqttServer = "localhost";
-	final Integer puertoAPIRest = 8043;
-	final Double umbral = 37.0;
+	final Integer puertoAPIRest = 80;
+	final Double umbral = 123.0;
 	// variabless privadas e inmodificables
 	private Gson gson;
 	private MySQLPool msc;
