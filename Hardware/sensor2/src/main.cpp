@@ -10,13 +10,13 @@
 //Configuración del sensor
 
 //Credenciales de la red wifi
-#define STASSID "reee"    //"Your_Wifi_SSID"
-#define STAPSK "seet" //"Your_Wifi_PASSWORD"
+#define STASSID "xd"    //"Your_Wifi_SSID"
+#define STAPSK "xd" //"Your_Wifi_PASSWORD"
 
 // Variables a enviar
 const int sensorID  =1234;// TODO
 const  int placaID = 1234;
-const int  groupID = 1234;
+const int  groupID = 1235;
 double concentracion; 
 
 

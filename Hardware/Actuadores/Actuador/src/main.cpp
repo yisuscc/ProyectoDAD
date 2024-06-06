@@ -11,13 +11,15 @@ int relay = 21;
 //const int DEVICE_ID = 124; // esto no sé muy bien para qué sirve.
 
 //Credenciales de la red wifi
-#define STASSID "TRILOYTOBY"    //"Your_Wifi_SSID"
-#define STAPSK "954228567A" //"Your_Wifi_PASSWORD"
+#define STASSID "xdd"    //"Your_Wifi_SSID"
+#define STAPSK "xdd" //"Your_Wifi_PASSWORD"
 const char *MQTT_CLIENT_NAME = "Actuador"; //TODO Cambiar
 
 // LAs variables a enviar del actuador 
 const int placaID = 1234;// CAmbiar siempre que sea necesario
+//#define groupID 1
 const int groupID = 1235; // CAMBIAR TAMBIEN EN la configuración de mqtt conect
+
 const int actuadorID = 1234;// CAMBIAR
 // el timestamp lo generamos luego
 boolean status;
@@ -161,7 +163,6 @@ sendPost(creaJSON(timeClient.getEpochTime(),status));
   IniMQTT();
   // enviamos el 1 post
    timeClient.update();
-   status = digitalread(relay);
   sendPost(creaJSON(timeClient.getEpochTime(),status));
 
 }
