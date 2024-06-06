@@ -56,6 +56,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 		Router router = Router.router(vertx);
+		//Para recibir las peticiones rest cambiar a puerto 80
 		vertx.createHttpServer().requestHandler(router::handle).listen(8039, result -> {
 			if (result.succeeded()) {
 				startFuture.complete();
