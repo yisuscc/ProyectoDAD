@@ -38,7 +38,7 @@ public class RestServer extends AbstractVerticle {
 	// parmetros modificables:
 	final String ipMqttServer = "localhost";
 	final Integer puertoAPIRest = 80;
-	final Double umbral = 123.0;
+	final Double umbral = 20.0;
 	// variabless privadas e inmodificables
 	private Gson gson;
 	private MySQLPool msc;
