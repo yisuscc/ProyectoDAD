@@ -33,7 +33,7 @@ public class RestServer extends AbstractVerticle {
 		// Definimos el router
 		// que se encarga de coger las apis y redirigirlas
 	Router router = Router.router(vertx);
-		vertx.createHttpServer().requestHandler(router::handle).listen(8080,result->{			if(result.succeeded()) {
+		vertx.createHttpServer().requestHandler(router::handle).listen(8034,result->{if(result.succeeded()) {
 			startFuture.complete();
 			}else {
 			startFuture.fail("El lanzamiento del servidor ha fallado"+result.cause());
@@ -64,9 +64,10 @@ public class RestServer extends AbstractVerticle {
 		// sensores de una placa dada;
 		router.get("/api/sensores/:placaId").handler(this::getAllSensores);
 		router.get("/api/actuadores/:placaId").handler(this::getAllActuadores);
-		// Opcionales que no te ocupen mucho tiempo
-		// lo mismo que las , 2,3 ,5, pero que te de las x mas recientes
-		//
+		//Deuelve el historíco de un sensor o actuador
+		router.get("/api/historicoSensor/:placaId/:id").handler(this::getHistoricoSensor);
+		router.get("/api/historicoActuador/:placaId/:id").handler(this::getHistoricoActuador);
+		
 
 	}
 	// definimos las llamadas del handler 
@@ -132,6 +133,39 @@ private void getAllActuadores(RoutingContext routingContext) {
 	routingContext.response().
 	putHeader("content-type", "application/json; charset=utf-8").
 	setStatusCode(200).end(gson.toJson(lsAux));
+}
+
+private void getHistoricoSensor(RoutingContext routingContext) {
+
+	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+	final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+	List<Sensor> resultado = apsa.getMapaSensores().get(Par.of(id, placaId));
+	if(resultado==null) {
+		routingContext.response().
+		putHeader("content-type", "application/json; charset=utf-8").
+		setStatusCode(404).end();
+	}else {
+		routingContext.response().
+		putHeader("content-type", "application/json; charset=utf-8").
+		setStatusCode(200).end(gson.toJson(resultado));
+	}
+	
+}
+private void getHistoricoActuador(RoutingContext routingContext) {
+	
+	final Integer placaId = Integer.parseInt(routingContext.request().getParam("placaId"));
+	final Integer id = Integer.parseInt(routingContext.request().getParam("id"));
+	List<Actuador> resultado = apsa.getMapaActuador().get(Par.of(id, placaId));
+	if(resultado==null) {
+		routingContext.response().
+		putHeader("content-type", "application/json; charset=utf-8").
+		setStatusCode(404).end();
+	}else {
+		routingContext.response().
+		putHeader("content-type", "application/json; charset=utf-8").
+		setStatusCode(200).end(gson.toJson(resultado));
+	}
+	
 }
 	// creamos el stop
 	public void stop(Promise<Void> stopPromise) throws Exception {
