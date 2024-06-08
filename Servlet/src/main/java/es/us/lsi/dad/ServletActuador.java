@@ -46,10 +46,7 @@ public class ServletActuador extends HttpServlet {
 	}
 		
 	}
-	protected void doUpdate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-			//TODO Para Luego
-		
-	}
+
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		Integer  actuadorId = Integer.parseInt(req.getParameter("id"));
 		if(actuadoresInternos.contieneActuador(actuadorId)) {
@@ -73,10 +70,7 @@ public class ServletActuador extends HttpServlet {
 		BufferedReader reader = request.getReader();
 		Gson gson = new Gson();
 		Actuador actuador = gson.fromJson(reader,Actuador.class);
-		// no se que condiciones ponerle 
-		Boolean cond = true;
-		if(cond) {
-			actuadoresInternos.addActuador(actuador);
+		if(actuadoresInternos.addActuador(actuador)) {
 			resp.setStatus(201);
 			resp.getWriter().println(gson.toJson(actuador));
 			

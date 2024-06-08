@@ -58,12 +58,7 @@ public class ServletSensor extends HttpServlet {
 		BufferedReader reader = req.getReader();
 		Gson gson = new Gson();
 		Sensor sensor = gson.fromJson(reader,Sensor.class);
-		// expandir las condiciones 
-		// esto quizas deberia encargarse la clase sensor con los checkers 
-		//Boolean cond = sensor.getId()!= null && sensor.getTimestamp()!= null;
-		Boolean cond = true;
-		if(cond) {
-			sensoresInternos.addSensor(sensor);
+		if(sensoresInternos.addSensor(sensor)) {
 			resp.setStatus(201);
 			resp.getWriter().println(gson.toJson(sensor));
 		}else {
