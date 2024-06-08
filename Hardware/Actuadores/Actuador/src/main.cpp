@@ -11,24 +11,16 @@ int relay = 21;
 //const int DEVICE_ID = 124; // esto no sé muy bien para qué sirve.
 
 //Credenciales de la red wifi
-<<<<<<< HEAD
-#define STASSID "xdd"    //"Your_Wifi_SSID"
-#define STAPSK "xdd" //"Your_Wifi_PASSWORD"
-=======
-#define STASSID "RED WIFI"    //"Your_Wifi_SSID"
-#define STAPSK "RED_WIFI" //"Your_Wifi_PASSWORD"
->>>>>>> parent of 4b8665b (ultimos cambio)
-const char *MQTT_CLIENT_NAME = "Actuador"; //TODO Cambiar
+
+#define STASSID "JUANYMEDIO"    //"Yur_Wifi_SSID"
+#define STAPSK "buensodias" //"Your_Wifi_PASSWORD"
+
+const char *MQTT_CLIENT_NAME = "Actuador3"; //TODO Cambiar
 
 // LAs variables a enviar del actuador 
 const int placaID = 1234;// CAmbiar siempre que sea necesario
-//#define groupID 1
-<<<<<<< HEAD
-const int groupID = 1235; // CAMBIAR TAMBIEN EN la configuración de mqtt conect
-=======
-const int groupID = 1234; // CAMBIAR TAMBIEN EN la configuración de mqtt conect
->>>>>>> parent of 4b8665b (ultimos cambio)
 
+const int groupID = 1234; // CAMBIAR TAMBIEN EN la configuración de mqtt conect
 const int actuadorID = 1234;// CAMBIAR
 // el timestamp lo generamos luego
 boolean status;
@@ -36,7 +28,7 @@ boolean status;
 //configuración del mqttt
 WiFiClient espClient;
 PubSubClient client(espClient);
-const char *MQTT_BROKER_ADRESS = "10.166.227.171"; //en micaso coincide con la del server rest
+const char *MQTT_BROKER_ADRESS = "10.166.227.189"; 
 const uint16_t MQTT_PORT = 1883;
 
 // COSAS PARA EL TIEMPO 
@@ -98,21 +90,21 @@ void sendPost(String json ){
   void ConnectMqtt()
 {
   Serial.print("Starting MQTT connection...");
-  if (client.connect(MQTT_CLIENT_NAME))
-  {// Aqui es donse se pone el groupID 
+  if (client.connect(MQTT_CLIENT_NAME,"admin","admin"))
+  {
+  Serial.println("Hola");
    const char* groupIDChar = String(groupID).c_str();
-    client.subscribe(groupIDChar);
-    //client.publish(groupIDChar, "connected");// Cambiar al group id
-    //SERIA utili poner un mesaje un poco mas especifico
+    client.subscribe("1234");
+    client.publish("1234", "connected");// Cambiar al group id
+   
     client.publish("Placas", "connected");
   }
   else
   {
     Serial.print("Failed MQTT connection, rc=");
     Serial.print(client.state());
-    Serial.println(" try again in 5 seconds");
-
-    delay(5000);
+    Serial.println(" try again in 10 seconds");
+    delay(10000);
   }
 }
  void OnMqttReceived(char *topic, byte *payload, unsigned int length)
@@ -142,11 +134,13 @@ sendPost(creaJSON(timeClient.getEpochTime(),status));
  void IniMQTT(){
   client.setServer(MQTT_BROKER_ADRESS, MQTT_PORT);
   client.setCallback(OnMqttReceived);
+  Serial.println("mqtt iniciado");
   }
   void HandleMqtt()
 {
   if (!client.connected())
   {
+    Serial.println(client.state());
     ConnectMqtt();
   }
   client.loop();
@@ -157,6 +151,7 @@ sendPost(creaJSON(timeClient.getEpochTime(),status));
   // primero establecemos el valor del pin 
   pinMode(relay,OUTPUT);
   digitalWrite(relay,HIGH); 
+  status = true; 
   //2 conexion puerto serie
   Serial.begin(9600);
   //3 conexion wifi
@@ -168,10 +163,12 @@ sendPost(creaJSON(timeClient.getEpochTime(),status));
     Serial.println(".");
   }
   Serial.println("Conectado al wifi");
+  delay(500);
   //4 conexion mqtt 
   IniMQTT();
   // enviamos el 1 post
    timeClient.update();
+   
   sendPost(creaJSON(timeClient.getEpochTime(),status));
 
 }
@@ -179,4 +176,5 @@ sendPost(creaJSON(timeClient.getEpochTime(),status));
 
 void loop() {
  HandleMqtt();
+ 
 }

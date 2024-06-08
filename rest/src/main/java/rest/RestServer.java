@@ -36,9 +36,10 @@ import io.vertx.sqlclient.Tuple;
 
 public class RestServer extends AbstractVerticle {
 	// parmetros modificables:
-	final String ipMqttServer = "localhost";
+	//final String ipMqttServer = "localhost";
+	final String ipMqttServer = "10.166.227.189";
 	final Integer puertoAPIRest = 80;
-	final Double umbral = 123.0;
+	final Double umbral = 15.0;
 	// variabless privadas e inmodificables
 	private Gson gson;
 	private MySQLPool msc;
@@ -62,7 +63,7 @@ public class RestServer extends AbstractVerticle {
 		 */
 		// 3) inicializamos el mqtt
 		mqttClient = MqttClient.create(vertx, new MqttClientOptions().setAutoKeepAlive(true));
-		mqttClient.connect(1883, ipMqttServer, s -> sendMessage("1234", "Hola"));
+		mqttClient.connect(1883, ipMqttServer, s -> sendMessage("Servidor", "Hola"));
 
 		// 4)Definimos el router
 		// que se encarga de coger las apis y redirigirlas
